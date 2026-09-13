@@ -1,4 +1,4 @@
-from aiogram import F
+from aiogram import F, Router
 from aiogram.types import CallbackQuery
 from aiogram.filters import CommandStart
 from aiogram.types import Message
@@ -9,7 +9,7 @@ from pair_service import find_pair, get_page_pairs
 from keyboards import create_pairs_keyboard, main_menu_keyboard, main_keyboard, pair_keyboard
 
 
-dp = Dispatcher()
+router = Router()
 
 pairs_data = [
     {
@@ -192,7 +192,7 @@ indicators_text = """
 В боте показатель отображается в часах; это оценка, а не точный срок.
 """.strip()
 
-@dp.callback_query(F.data == 'about')
+@router.callback_query(F.data == 'about')
 async def about_handler(callback: CallbackQuery) -> None:
     """
     Показывает раздел о проекте.
@@ -211,7 +211,7 @@ async def about_handler(callback: CallbackQuery) -> None:
     await callback.message.edit_text('Здесь будет информация о нашем проекте',
                                      reply_markup=main_menu_keyboard)
 
-@dp.callback_query(F.data == 'pairs')
+@router.callback_query(F.data == 'pairs')
 async def pairs_handler(callback: CallbackQuery) -> None:
     """
       Показывает список подходящих пар.
@@ -230,18 +230,26 @@ async def pairs_handler(callback: CallbackQuery) -> None:
     await callback.answer()
     page_pairs = get_page_pairs(pairs_data, page=0)
     await callback.message.edit_text(format_pairs(page_pairs),
-                                     reply_markup=create_pairs_keyboard(page_pairs))
+                                     reply_markup=create_pairs_keyboard(page_pairs,
+                                                                        page=0,
+                                                                        total_pairs=len(pairs_data)
+                                                                        )
+                                     )
 
-@dp.callback_query(F.data.startswith('pairs_page:'))
+@router.callback_query(F.data.startswith('pairs_page:'))
 async def pairs_page_handler(callback: CallbackQuery) -> None:
     await callback.answer()
     page_number = int(callback.data.split(':', 1)[1])
     page_pairs = get_page_pairs(pairs_data, page_number)
     await callback.message.edit_text(format_pairs(page_pairs),
-                                     reply_markup=create_pairs_keyboard(page_pairs))
+                                     reply_markup=create_pairs_keyboard(page_pairs,
+                                                                        page=page_number,
+                                                                        total_pairs=len(pairs_data)
+                                                                        )
+                                     )
 
 
-@dp.callback_query(F.data == 'indicators')
+@router.callback_query(F.data == 'indicators')
 async def indicators_handler(callback: CallbackQuery) -> None:
     """
         Показывает справочник показателей.
@@ -261,7 +269,7 @@ async def indicators_handler(callback: CallbackQuery) -> None:
     await callback.message.edit_text(indicators_text,
                                      reply_markup=main_menu_keyboard)
 
-@dp.callback_query(F.data == 'main_menu')
+@router.callback_query(F.data == 'main_menu')
 async def main_menu_handler(callback: CallbackQuery) -> None:
     """
         Возвращает пользователя в главное меню.
@@ -279,7 +287,7 @@ async def main_menu_handler(callback: CallbackQuery) -> None:
     await callback.answer()
     await callback.message.edit_text('Hello', reply_markup=main_keyboard)
 
-@dp.callback_query(F.data.startswith('pair:'))
+@router.callback_query(F.data.startswith('pair:'))
 async def selected_pair(callback: CallbackQuery) -> Message | bool:
     """
       Показывает сведения о выбранной паре.
@@ -314,7 +322,7 @@ async def selected_pair(callback: CallbackQuery) -> Message | bool:
                                                 reply_markup=pair_keyboard)
 
 
-@dp.message(CommandStart())
+@router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
     """
     Отправляет приветствие и главное меню по команде /start.

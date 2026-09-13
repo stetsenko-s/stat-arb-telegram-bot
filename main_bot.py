@@ -6,6 +6,7 @@ import sys
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from handkers import router
 
 
 
@@ -29,6 +30,7 @@ async def main() -> None:
         None: Не возвращает значение при штатном завершении polling.
     """
     bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    dp.include_router(router)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

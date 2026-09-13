@@ -44,7 +44,7 @@ pair_keyboard = InlineKeyboardMarkup(
     ]
 )
 
-def create_pairs_keyboard(pairs) -> InlineKeyboardMarkup:
+def create_pairs_keyboard(pairs, page, total_pairs, page_size=5) -> InlineKeyboardMarkup:
     """
     Создаёт клавиатуру выбора пары.
 
@@ -66,8 +66,31 @@ def create_pairs_keyboard(pairs) -> InlineKeyboardMarkup:
         button = InlineKeyboardButton(text=name, callback_data=f'pair:{v['pair_id']}')
         arr.append([button])
 
+    navigation = []
+
+    if page > 0:
+        navigation.append(
+            InlineKeyboardButton(
+                text='⬅️ Назад',
+                callback_data=f'pairs_page:{page - 1}'
+            )
+        )
+
+    if (page + 1) * page_size < total_pairs:
+        navigation.append(
+            InlineKeyboardButton(
+                text='Вперёд ➡️',
+                callback_data=f'pairs_page:{page + 1}'
+            )
+        )
+
+    if navigation:
+        arr.append(navigation)
+
+
+
+
     arr.append([main_menu])
 
     return InlineKeyboardMarkup(inline_keyboard=arr)
-
 
